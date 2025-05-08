@@ -15,8 +15,8 @@ enable_language(CUDA)
 SET(CUDA_SEPARABLE_COMPILATION ON)
 find_package(CUDA QUIET REQUIRED)
 
-set(CUDA_TARGET_ARCH compute_75)
-set(CUDA_ARCHITECTURES "75")
+set(CUDA_TARGET_ARCH compute_70)
+set(CUDA_ARCHITECTURES "70")
 
 #find_package (Threads REQUIRED)
 #find_package(Thrust REQUIRED CONFIG)
@@ -42,4 +42,4 @@ target_compile_options(Mfree PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
                        --relocatable-device-code=true
                        >)
 target_link_libraries(Mfree )
-set_target_properties(Mfree PROPERTIES CUDA_ARCHITECTURES "75")
+set_target_properties(Mfree PROPERTIES CUDA_ARCHITECTURES "70")
