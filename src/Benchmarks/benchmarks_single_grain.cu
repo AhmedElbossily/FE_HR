@@ -3125,7 +3125,7 @@ particle_gpu *setup_FEx_g_mm_sec(grid_base **grid, float_t &p_mass)
 				float_t r = sqrt(p.x * p.x + p.y * p.y);
 
 
-				if (r >lx/2. || (r < orifice/2. && p.z > container_thickness + billet_length) 
+				if (r >lx/2. || (((p.x > -orifice/2. && p.x < orifice/2.) || (p.y > -orifice/2. && p.y < orifice/2.)) && p.z > container_thickness + billet_length) 
 				|| (r < after_orifice/2. && p.z > container_thickness + billet_length + bearing_length)
 				|| (r > top_die_diameter/2. && p.z > container_length)
 				|| (r > top_die_diameter/2. && r <= dz+(top_die_diameter/2.)&& p.z > container_thickness+billet_length) )
