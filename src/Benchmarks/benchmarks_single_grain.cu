@@ -3059,7 +3059,7 @@ particle_gpu *setup_FEx_g_mm_sec(grid_base **grid, float_t &p_mass)
 
 	// scaling factors
 	float_t Lsf = 1000.; // lenth scale factor
-	float_t ms = 1.0e5;
+	float_t ms = 1.0e3;
 	float_t VsfM = 1.;		 // 1000 failure occured at ~15%
 	float_t Vsf = 10 * VsfM; // velocity scale factor /////////////////////////////////////////////////
 	global_Vsf = Vsf;
