@@ -796,11 +796,9 @@ __global__ void do_merge_conditions_thermal(particle_gpu particles, int *joined_
 
 
 __device__ void updatePosition(float_t x, float_t y, float_t w, float_t t, float_t& x_new, float_t& y_new) {
-    // Convert angular velocity to radians per second
-    float_t omega = (w * 2 * M_PI) / 60.0;
 
     // Calculate the angle of rotation
-    float_t theta = omega * t;
+    float_t theta = w * t;
 
     // Compute the new position
     x_new = x * cos(theta) - y * sin(theta);
