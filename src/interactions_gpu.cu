@@ -1699,7 +1699,9 @@ __global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu 
 		if(pi.x > orifice_radius )
 		{
 			gN = pi.x - orifice_radius;
-			normal(1., 0., 0.);
+			normal.x = 1.;
+			normal.y = 0.;
+			normal.z = 0.;
 			float_t x = orifice_radius;
 			float_t y = pi.y;
 			vec3_t w(0.0, 0.0, gWz);
@@ -1726,7 +1728,9 @@ __global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu 
 		if(pi.x < -orifice_radius )
 		{
 			gN = -pi.x - orifice_radius;
-			normal(-1., 0., 0.);
+			normal.x = -1.;
+			normal.y = 0.;
+			normal.z = 0.;
 			float_t x = -orifice_radius;
 			float_t y = pi.y;
 			vec3_t w(0.0, 0.0, gWz);
@@ -1752,7 +1756,9 @@ __global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu 
 		if(pi.y > orifice_radius )
 		{
 			gN = pi.y - orifice_radius;
-			normal(0., 1., 0.);
+			normal.x = 0.;
+			normal.y = 1.;
+			normal.z = 0.;
 			float_t x = pi.x;
 			float_t y = orifice_radius;
 			vec3_t w(0.0, 0.0, gWz);
@@ -1778,7 +1784,9 @@ __global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu 
 		if(pi.y < -orifice_radius )
 		{
 			gN = -pi.y - orifice_radius;
-			normal(0., -1., 0.);
+			normal.x = 0.;
+			normal.y = -1.;
+			normal.z = 0.;
 			float_t x = pi.x;
 			float_t y = -orifice_radius;
 			vec3_t w(0.0, 0.0, gWz);
