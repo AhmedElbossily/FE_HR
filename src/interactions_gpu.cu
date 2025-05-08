@@ -1545,7 +1545,7 @@ __device__ void handle_contact(bool &is_sticking, vec3_t &fN, vec3_t &fT, vec3_t
 	save_forces(forces, fN, fT, particles.p[pidx], particles.S[pidx], particles.vel_t[pidx]);
 }
 
-__global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu particles, float_t dt, float3 *forces, float_t top_die_surface, float_t v_die, float_t gWz)
+__global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu particles, float_t dt, float3 *forces, float_t top_die_surface, float_t v_die, float_t gWz, float_t time_current)
 {
 	unsigned int pidx = blockIdx.x * blockDim.x + threadIdx.x;
 	const unsigned int N = particles.N;
@@ -1695,120 +1695,81 @@ __global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu 
 
 	if (p_state == 1)
 	{
-		// This is one side of the square orifice
-		if(pi.x > orifice_radius )
+
+		float_t theta = gWz * time_current;
+		float_t cos_theta = cos(theta);
+		float_t sin_theta = sin(theta);
+
+		// Angular velocity vector (for cross product)
+		vec3_t w(0.0, 0.0, gWz);
+
+		// Wall definitions: each has an original position and normal
+		vec3_t wall_normals_orig[4] = {
+			vec3_t(1.0, 0.0, 0.0),
+			vec3_t(-1.0, 0.0, 0.0),
+			vec3_t(0.0, 1.0, 0.0),
+			vec3_t(0.0, -1.0, 0.0)
+		};
+		
+		vec3_t wall_positions_orig[4] = {
+			vec3_t(orifice_radius, 0.0, 0.0),
+			vec3_t(-orifice_radius, 0.0, 0.0),
+			vec3_t(0.0, orifice_radius, 0.0),
+			vec3_t(0.0, -orifice_radius, 0.0)
+		};
+
+		for (int i = 0; i < 4; ++i)
 		{
-			gN = pi.x - orifice_radius;
-			normal.x = 1.;
-			normal.y = 0.;
-			normal.z = 0.;
-			float_t x = orifice_radius;
-			float_t y = pi.y;
-			vec3_t w(0.0, 0.0, gWz);
-			vec3_t r(x, y, 0.0);
-			vec3_t vm = glm::cross(w, r);
-			vm.z = v_die;
+			// Rotate normal
+			vec3_t n_orig = wall_normals_orig[i];
+			vec3_t normal;
+			normal.x = n_orig.x * cos_theta - n_orig.y * sin_theta;
+			normal.y = n_orig.x * sin_theta + n_orig.y * cos_theta;
+			normal.z = 0.0;
 
-			vec3_t v = vs - vm;
-			vr = v - v * normal;
+			// Rotate wall position
+			vec3_t pos_orig = wall_positions_orig[i];
+			vec3_t wall_pos;
+			wall_pos.x = pos_orig.x * cos_theta - pos_orig.y * sin_theta;
+			wall_pos.y = pos_orig.x * sin_theta + pos_orig.y * cos_theta;
+			wall_pos.z = 0.0;
 
-			kirk_contact_force(fN, gN, v, normal, dt, p_temp, extruding);
+			// Compute gap and check for contact
+			vec3_t r_pi = pi - wall_pos;
+			gN = glm::dot(r_pi, normal);
 
-			bool is_sticking = false;
-			handle_contact(is_sticking, fN, fT, vr, fricold, gN, normal, vs, dt, p_temp, extruding, contact_alpha, slave_mass, friction_mu, ffl, cp, particles, pidx, particles.T[pidx], forces);
-			if (is_sticking)
+			if (gN > 0) // contact occurs only if particle penetrates the wall
 			{
+				// Compute intersection point between line from origin to pi and wall plane
+				float_t denom = glm::dot(pi, normal);
+				
+				if (fabs(denom) > 1e-8) { // avoid division by zero
+					float_t t_inter = glm::dot(wall_pos, normal) / denom;
+					vec3_t p_wall = t_inter * pi;
 
-				particles.vel[pidx].x = vm.x;
-				particles.vel[pidx].y = vm.y;
-				particles.vel[pidx].z = vm.z;
+					vec3_t vm = glm::cross(w, p_wall);
+					vm.z = v_die;
+
+					vec3_t v = vs - vm;
+					vr = v - glm::dot(v, normal) * normal;
+
+					kirk_contact_force(fN, gN, v, normal, dt, p_temp, extruding);
+
+					bool is_sticking = false;
+					handle_contact(is_sticking, fN, fT, vr, fricold, gN, normal, vs, dt, p_temp, extruding,
+								contact_alpha, slave_mass, friction_mu, ffl, cp, particles, pidx,
+								particles.T[pidx], forces);
+
+					if (is_sticking)
+					{
+						particles.vel[pidx].x = vm.x;
+						particles.vel[pidx].y = vm.y;
+						particles.vel[pidx].z = vm.z;
+					}
+				}
 			}
 		}
 
-		if(pi.x < -orifice_radius )
-		{
-			gN = -pi.x - orifice_radius;
-			normal.x = -1.;
-			normal.y = 0.;
-			normal.z = 0.;
-			float_t x = -orifice_radius;
-			float_t y = pi.y;
-			vec3_t w(0.0, 0.0, gWz);
-			vec3_t r(x, y, 0.0);
-			vec3_t vm = glm::cross(w, r);
-			vm.z = v_die;
-
-			vec3_t v = vs - vm;
-			vr = v - v * normal;
-
-			kirk_contact_force(fN, gN, v, normal, dt, p_temp, extruding);
-
-			bool is_sticking = false;
-			handle_contact(is_sticking, fN, fT, vr, fricold, gN, normal, vs, dt, p_temp, extruding, contact_alpha, slave_mass, friction_mu, ffl, cp, particles, pidx, particles.T[pidx], forces);
-			if (is_sticking)
-			{
-
-				particles.vel[pidx].x = vm.x;
-				particles.vel[pidx].y = vm.y;
-				particles.vel[pidx].z = vm.z;
-			}
-		}
-		if(pi.y > orifice_radius )
-		{
-			gN = pi.y - orifice_radius;
-			normal.x = 0.;
-			normal.y = 1.;
-			normal.z = 0.;
-			float_t x = pi.x;
-			float_t y = orifice_radius;
-			vec3_t w(0.0, 0.0, gWz);
-			vec3_t r(x, y, 0.0);
-			vec3_t vm = glm::cross(w, r);
-			vm.z = v_die;
-
-			vec3_t v = vs - vm;
-			vr = v - v * normal;
-
-			kirk_contact_force(fN, gN, v, normal, dt, p_temp, extruding);
-
-			bool is_sticking = false;
-			handle_contact(is_sticking, fN, fT, vr, fricold, gN, normal, vs, dt, p_temp, extruding, contact_alpha, slave_mass, friction_mu, ffl, cp, particles, pidx, particles.T[pidx], forces);
-			if (is_sticking)
-			{
-
-				particles.vel[pidx].x = vm.x;
-				particles.vel[pidx].y = vm.y;
-				particles.vel[pidx].z = vm.z;
-			}
-		}
-		if(pi.y < -orifice_radius )
-		{
-			gN = -pi.y - orifice_radius;
-			normal.x = 0.;
-			normal.y = -1.;
-			normal.z = 0.;
-			float_t x = pi.x;
-			float_t y = -orifice_radius;
-			vec3_t w(0.0, 0.0, gWz);
-			vec3_t r(x, y, 0.0);
-			vec3_t vm = glm::cross(w, r);
-			vm.z = v_die;
-
-			vec3_t v = vs - vm;
-			vr = v - v * normal;
-
-			kirk_contact_force(fN, gN, v, normal, dt, p_temp, extruding);
-
-			bool is_sticking = false;
-			handle_contact(is_sticking, fN, fT, vr, fricold, gN, normal, vs, dt, p_temp, extruding, contact_alpha, slave_mass, friction_mu, ffl, cp, particles, pidx, particles.T[pidx], forces);
-			if (is_sticking)
-			{
-
-				particles.vel[pidx].x = vm.x;
-				particles.vel[pidx].y = vm.y;
-				particles.vel[pidx].z = vm.z;
-			}
-		}
 		// This is a wire interacting with the after orifice outer surface
 		if (r2 > after_orifice_radius * after_orifice_radius && pi.z > top_die_surface + 8.0)
 		{
@@ -2056,7 +2017,7 @@ void interactions_rod_force_Songwon(particle_gpu *particles, const int *cells_st
 	// do_interactions_rod_force_Songwon_modified_2<<<dG,dB>>>(*particles, global_time_dt, joined_count, joined_mean);
 	// do_interactions_rod_force_Songwon<<<dG,dB>>>(*particles, global_time_dt, forces);
 	// interactions_calculate_force_die<<<dG, dB>>>(*particles, global_time_dt, forces, top_surface);
-	interactions_calculate_force_die_using_kirk_method<<<dG, dB>>>(*particles, global_time_dt, forces, top_surface, global_die_velocity, global_wz);
+	interactions_calculate_force_die_using_kirk_method<<<dG, dB>>>(*particles, global_time_dt, forces, top_surface, global_die_velocity, global_wz, global_time_current);
 
 	// do_interactions_rod_force_Songwon_center_vector<<<dG,dB>>>(*particles, global_time_dt);
 	// do_interactions_rod_force_Songwon_type_2<<<dG,dB>>>(*particles, global_time_dt);
