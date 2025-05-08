@@ -1735,17 +1735,17 @@ __global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu 
 			wall_pos.z = 0.0;
 
 			// Compute gap and check for contact
-			vec3_t r_pi = pi - wall_pos;
+			vec3_t r_pi(pi.x - wall_pos.x, pi.y - wall_pos.y, pi.z - wall_pos.z);
 			gN = glm::dot(r_pi, normal);
 
 			if (gN > 0) // contact occurs only if particle penetrates the wall
 			{
 				// Compute intersection point between line from origin to pi and wall plane
-				float_t denom = glm::dot(pi, normal);
+				float_t denom = glm::dot(vec3_t(pi.x,pi.y,pi.z) , normal);
 				
 				if (fabs(denom) > 1e-8) { // avoid division by zero
 					float_t t_inter = glm::dot(wall_pos, normal) / denom;
-					vec3_t p_wall = t_inter * pi;
+					vec3_t p_wall (t_inter * pi.x, t_inter * pi.y, t_inter * pi.z);
 
 					vec3_t vm = glm::cross(w, p_wall);
 					vm.z = v_die;
