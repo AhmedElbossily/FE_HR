@@ -1601,7 +1601,7 @@ __global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu 
 		particles.pos[pidx].w = 0;
 	}
 
-	if ((r2 < orifice_radius * orifice_radius) && (pi.z > top_die_surface))
+	if (((pi.x > -orifice_radius && pi.x < orifice_radius) && (pi.y > -orifice_radius && pi.y < orifice_radius))&& (pi.z > top_die_surface))
 	{
 		// This is extruded wire
 		particles.pos[pidx].w = 1;
@@ -1695,16 +1695,92 @@ __global__ void interactions_calculate_force_die_using_kirk_method(particle_gpu 
 
 	if (p_state == 1)
 	{
-		// This is a wire interacting with the orifice
-		if (r2 > orifice_radius * orifice_radius && pi.z <= top_die_surface + 8.0)
+		// This is one side of the square orifice
+		if(pi.x > orifice_radius )
 		{
-			gN = abs(sqrt_r2 - orifice_radius);
-			normal.x = pi.x / mag;
-			normal.y = pi.y / mag;
+			gN = pi.x - orifice_radius;
+			normal(1., 0., 0.)
+			float_t x = orifice_radius;
+			float_t y = pi.y;
+			vec3_t w(0.0, 0.0, gWz);
+			vec3_t r(x, y, 0.0);
+			vec3_t vm = glm::cross(w, r);
+			vm.z = v_die;
 
-			float_t x = (orifice_radius / mag) * pi.x;
-			float_t y = (orifice_radius / mag) * pi.y;
+			vec3_t v = vs - vm;
+			vr = v - v * normal;
 
+			kirk_contact_force(fN, gN, v, normal, dt, p_temp, extruding);
+
+			bool is_sticking = false;
+			handle_contact(is_sticking, fN, fT, vr, fricold, gN, normal, vs, dt, p_temp, extruding, contact_alpha, slave_mass, friction_mu, ffl, cp, particles, pidx, particles.T[pidx], forces);
+			if (is_sticking)
+			{
+
+				particles.vel[pidx].x = vm.x;
+				particles.vel[pidx].y = vm.y;
+				particles.vel[pidx].z = vm.z;
+			}
+		}
+
+		if(pi.x < -orifice_radius )
+		{
+			gN = -pi.x - orifice_radius;
+			normal(-1., 0., 0.)
+			float_t x = -orifice_radius;
+			float_t y = pi.y;
+			vec3_t w(0.0, 0.0, gWz);
+			vec3_t r(x, y, 0.0);
+			vec3_t vm = glm::cross(w, r);
+			vm.z = v_die;
+
+			vec3_t v = vs - vm;
+			vr = v - v * normal;
+
+			kirk_contact_force(fN, gN, v, normal, dt, p_temp, extruding);
+
+			bool is_sticking = false;
+			handle_contact(is_sticking, fN, fT, vr, fricold, gN, normal, vs, dt, p_temp, extruding, contact_alpha, slave_mass, friction_mu, ffl, cp, particles, pidx, particles.T[pidx], forces);
+			if (is_sticking)
+			{
+
+				particles.vel[pidx].x = vm.x;
+				particles.vel[pidx].y = vm.y;
+				particles.vel[pidx].z = vm.z;
+			}
+		}
+		if(pi.y > orifice_radius )
+		{
+			gN = pi.y - orifice_radius;
+			normal(0., 1., 0.)
+			float_t x = pi.x;
+			float_t y = orifice_radius;
+			vec3_t w(0.0, 0.0, gWz);
+			vec3_t r(x, y, 0.0);
+			vec3_t vm = glm::cross(w, r);
+			vm.z = v_die;
+
+			vec3_t v = vs - vm;
+			vr = v - v * normal;
+
+			kirk_contact_force(fN, gN, v, normal, dt, p_temp, extruding);
+
+			bool is_sticking = false;
+			handle_contact(is_sticking, fN, fT, vr, fricold, gN, normal, vs, dt, p_temp, extruding, contact_alpha, slave_mass, friction_mu, ffl, cp, particles, pidx, particles.T[pidx], forces);
+			if (is_sticking)
+			{
+
+				particles.vel[pidx].x = vm.x;
+				particles.vel[pidx].y = vm.y;
+				particles.vel[pidx].z = vm.z;
+			}
+		}
+		if(pi.y < -orifice_radius )
+		{
+			gN = -pi.y - orifice_radius;
+			normal(0., -1., 0.)
+			float_t x = pi.x;
+			float_t y = -orifice_radius;
 			vec3_t w(0.0, 0.0, gWz);
 			vec3_t r(x, y, 0.0);
 			vec3_t vm = glm::cross(w, r);
