@@ -3,7 +3,7 @@
 ##Resource Request
 
 #SBATCH --job-name=FE_HR
-#SBATCH --partition=pGPU
+#SBATCH --partition=p2GPU32
 #SBATCH --ntasks=1
 #SBATCH --exclusive
 
