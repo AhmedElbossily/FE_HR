@@ -384,7 +384,7 @@ void leap_frog::interpolate(double value, double default_v)
 		
 		// ForcePIDController pid(0.5f, 0.1f, 0.05f, dt_control, -0.001f, 0.4f); // Tune Kp, Ki, Kd
 		
-/* 		if (ct < 30){
+ 		if (ct < 30){
 			ForcePIDController pid(0.5f, 0.1f, 0.05f, dt_control, -0.4 * global_Vsf * 3., 0.4 * global_Vsf * 3.); // Tune Kp, Ki, Kd
 			global_die_velocity = pid.computeVelocity(ct, fz);
 		}
@@ -394,11 +394,8 @@ void leap_frog::interpolate(double value, double default_v)
 			ForcePIDController pid(0.5f, 0.1f, 0.05f, dt_control, -2. * global_Vsf * 3., -0.01); // Tune Kp, Ki, Kd
 			global_die_velocity = pid.computeVelocity(ct, fz);
 		
-		} */
+		} 
 
-		ForcePIDController pid(0.5f, 0.1f, 0.05f, dt_control, -2. * global_Vsf * 3., -0.01); // Tune Kp, Ki, Kd
-		global_die_velocity = pid.computeVelocity(ct, fz);
-			
 		
 
 		delete h_force;
@@ -412,12 +409,12 @@ void leap_frog::update_wz()
 	float_t ct = global_time_current * global_Vsf;
 	float_t wz = 90.;
 
-/* 	if (ct < 30.)
+ 	if (ct < 30.)
 		wz = 300.;
 	else if (ct > 40.) 
 		wz = 90.;
 	else
-		wz = -21 * ct + 930; */
+		wz = -21 * ct + 930; 
 
 
 	global_wz = wz * 0.104719755 * global_Vsf;

@@ -13,13 +13,12 @@ public:
     float computeVelocity(float ct, float fz_measured) {
         // Time-varying target force
         float fz_target;
-        fz_target = -270.0f;  // Default target force
-        /* if (ct < 30.0f)
+        if (ct < 30.0f)
             fz_target = -40.0f;
         else if (ct > 40.0f)
             fz_target = -270.0f;
         else
-            fz_target = -1.*(23. * ct - 650.); */
+            fz_target = -1.*(23. * ct - 650.); 
 
         // Error signal
         float error = fz_target - fz_measured;
